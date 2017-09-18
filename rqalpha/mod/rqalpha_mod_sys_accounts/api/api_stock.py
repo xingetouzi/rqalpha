@@ -19,7 +19,7 @@ from decimal import Decimal, getcontext
 import six
 import numpy as np
 
-from rqalpha.api.api_base import decorate_api_exc, instruments, cal_style
+from rqalpha.api.api_base import decorate_api_exc, instruments, cal_style, register_api
 from rqalpha.const import DEFAULT_ACCOUNT_TYPE, EXECUTION_PHASE, SIDE, ORDER_TYPE
 from rqalpha.environment import Environment
 from rqalpha.execution_context import ExecutionContext
@@ -45,6 +45,9 @@ __all__ = [
 ]
 
 
+register_api("scheduler", scheduler)
+
+
 def export_as_api(func):
     __all__.append(func.__name__)
 
@@ -56,7 +59,8 @@ def export_as_api(func):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('amount').is_number(),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))
@@ -141,6 +145,10 @@ def order_shares(id_or_ins, amount, price=None, style=None):
 def _sell_all_stock(order_book_id, amount, style):
     env = Environment.get_instance()
     order = Order.__from_create__(order_book_id, amount, SIDE.SELL, style, None)
+    if amount == 0:
+        order.mark_rejected(_(u"Order Creation Failed: 0 order quantity"))
+        return order
+
     if env.can_submit_order(order):
         env.broker.submit_order(order)
     return order
@@ -149,7 +157,8 @@ def _sell_all_stock(order_book_id, amount, style):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('amount').is_number(),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))
@@ -191,7 +200,8 @@ def order_lots(id_or_ins, amount, price=None, style=None):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('cash_amount').is_number(),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))
@@ -263,7 +273,8 @@ def order_value(id_or_ins, cash_amount, price=None, style=None):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('percent').is_number().is_greater_or_equal_than(-1).is_less_or_equal_than(1),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))
@@ -301,7 +312,8 @@ def order_percent(id_or_ins, percent, price=None, style=None):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('cash_amount').is_number(),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))
@@ -342,7 +354,8 @@ def order_target_value(id_or_ins, cash_amount, price=None, style=None):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
                                 EXECUTION_PHASE.ON_TICK,
-                                EXECUTION_PHASE.SCHEDULED)
+                                EXECUTION_PHASE.SCHEDULED,
+                                EXECUTION_PHASE.GLOBAL)
 @apply_rules(verify_that('id_or_ins').is_valid_stock(),
              verify_that('percent').is_number().is_greater_or_equal_than(0).is_less_or_equal_than(1),
              verify_that('style').is_instance_of((MarketOrder, LimitOrder, type(None))))

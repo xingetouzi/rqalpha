@@ -51,7 +51,8 @@ class FutureAccount(BaseAccount):
         event_bus.add_listener(EVENT.ORDER_UNSOLICITED_UPDATE, self._on_order_unsolicited_update)
         event_bus.add_listener(EVENT.TRADE, self._on_trade)
         if self.AGGRESSIVE_UPDATE_LAST_PRICE:
-            event_bus.add_listener(EVENT.BAR, self._update_last_price)
+            event_bus.add_listener(EVENT.BAR, self._on_bar)
+            event_bus.add_listener(EVENT.TICK, self._on_tick)
 
     def fast_forward(self, orders, trades=list()):
         # 计算 Positions
@@ -248,7 +249,11 @@ class FutureAccount(BaseAccount):
 
         self._backward_trade_set.clear()
 
-    def _update_last_price(self, event):
+    def _on_bar(self, event):
+        for position in self._positions.values():
+            position.update_last_price()
+
+    def _on_tick(self, event):
         for position in self._positions.values():
             position.update_last_price()
 

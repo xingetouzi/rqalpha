@@ -47,6 +47,7 @@ class StockAccount(BaseAccount):
         event_bus.add_listener(EVENT.SETTLEMENT, self._on_settlement)
         if self.AGGRESSIVE_UPDATE_LAST_PRICE:
             event_bus.add_listener(EVENT.BAR, self._on_bar)
+            event_bus.add_listener(EVENT.TICK, self._on_tick)
 
     def order(self, order_book_id, quantity, style, target=False):
         position = self.positions[order_book_id]
@@ -171,6 +172,10 @@ class StockAccount(BaseAccount):
         for position in self._positions.values():
             position.update_last_price()
 
+    def _on_tick(self, event):
+        for position in self._positions.values():
+            position.update_last_price()
+
     @property
     def type(self):
         return DEFAULT_ACCOUNT_TYPE.STOCK.name
@@ -201,11 +206,18 @@ class StockAccount(BaseAccount):
 
             dividend_per_share = dividend['dividend_cash_before_tax'] / dividend['round_lot']
             position.dividend_(dividend_per_share)
-            self._dividend_receivable[order_book_id] = {
-                'quantity': position.quantity,
-                'dividend_per_share': dividend_per_share,
-                'payable_date': self._int_to_date(dividend['payable_date']),
-            }
+
+            config = Environment.get_instance().config
+            if config.extra.dividend_reinvestment:
+                last_price = Environment.get_instance().data_proxy.get_bar(order_book_id, trading_date).close
+                shares = position.quantity * dividend_per_share / last_price
+                position._quantity += shares
+            else:
+                self._dividend_receivable[order_book_id] = {
+                    'quantity': position.quantity,
+                    'dividend_per_share': dividend_per_share,
+                    'payable_date': self._int_to_date(dividend['payable_date']),
+                }
 
     def _handle_split(self, trading_date):
         data_proxy = Environment.get_instance().data_proxy

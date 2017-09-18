@@ -28,30 +28,30 @@ import requests
 import six
 import better_exceptions
 
-from . import const
-from .api import helper as api_helper
-from .core.strategy_loader import FileStrategyLoader, SourceCodeStrategyLoader, UserFuncStrategyLoader
-from .core.strategy import Strategy
-from .core.strategy_universe import StrategyUniverse
-from .core.global_var import GlobalVars
-from .core.strategy_context import StrategyContext
-from .data.base_data_source import BaseDataSource
-from .data.data_proxy import DataProxy
-from .environment import Environment
-from .events import EVENT, Event
-from .execution_context import ExecutionContext
-from .interface import Persistable
-from .mod import ModHandler
-from .model.bar import BarMap
-from .model.portfolio import Portfolio
-from .model.base_position import Positions
-from .utils import create_custom_exception, run_with_user_log_disabled, scheduler as mod_scheduler
-from .utils.exception import CustomException, is_user_exc, patch_user_exc
-from .utils.i18n import gettext as _
-from .utils.logger import user_log, user_system_log, system_log, user_print, user_detail_log, init_logger, user_std_handler
-from .utils.persisit_helper import CoreObjectsPersistProxy, PersistHelper
-from .utils.scheduler import Scheduler
-from .utils.config import set_locale
+from rqalpha import const
+from rqalpha.api import helper as api_helper
+from rqalpha.core.strategy_loader import FileStrategyLoader, SourceCodeStrategyLoader, UserFuncStrategyLoader
+from rqalpha.core.strategy import Strategy
+from rqalpha.core.strategy_universe import StrategyUniverse
+from rqalpha.core.global_var import GlobalVars
+from rqalpha.core.strategy_context import StrategyContext
+from rqalpha.data.base_data_source import BaseDataSource
+from rqalpha.data.data_proxy import DataProxy
+from rqalpha.environment import Environment
+from rqalpha.events import EVENT, Event
+from rqalpha.execution_context import ExecutionContext
+from rqalpha.interface import Persistable
+from rqalpha.mod import ModHandler
+from rqalpha.model.bar import BarMap
+from rqalpha.model.portfolio import Portfolio
+from rqalpha.model.base_position import Positions
+from rqalpha.utils import create_custom_exception, run_with_user_log_disabled, scheduler as mod_scheduler
+from rqalpha.utils.exception import CustomException, is_user_exc, patch_user_exc
+from rqalpha.utils.i18n import gettext as _
+from rqalpha.utils.logger import user_log, user_system_log, system_log, user_print, user_detail_log, init_logger, user_std_handler
+from rqalpha.utils.persisit_helper import CoreObjectsPersistProxy, PersistHelper
+from rqalpha.utils.scheduler import Scheduler
+from rqalpha.utils.config import set_locale
 
 jsonpickle_numpy.register_handlers()
 
@@ -60,7 +60,6 @@ def _adjust_start_date(config, data_proxy):
     origin_start_date, origin_end_date = config.base.start_date, config.base.end_date
     start, end = data_proxy.available_data_range(config.base.frequency)
 
-    # print(repr(start), repr(end))
     config.base.start_date = max(start, config.base.start_date)
     config.base.end_date = min(end, config.base.end_date)
     config.base.trading_calendar = data_proxy.get_trading_dates(config.base.start_date, config.base.end_date)
@@ -294,16 +293,11 @@ def run(config, source_code=None, user_funcs=None):
 
         if env.profile_deco:
             output_profile_result(env)
-
-        result = mod_handler.tear_down(const.EXIT_CODE.EXIT_SUCCESS)
-        system_log.debug(_(u"strategy run successfully, normal exit"))
-        return result
     except CustomException as e:
         if init_succeed and env.config.base.persist and persist_helper:
             persist_helper.persist()
 
         code = _exception_handler(e)
-
         mod_handler.tear_down(code, e)
     except Exception as e:
         if init_succeed and env.config.base.persist and persist_helper:
@@ -313,8 +307,11 @@ def run(config, source_code=None, user_funcs=None):
         user_exc = create_custom_exception(exc_type, exc_val, exc_tb, config.base.strategy_file)
 
         code = _exception_handler(user_exc)
-
         mod_handler.tear_down(code, user_exc)
+    else:
+        result = mod_handler.tear_down(const.EXIT_CODE.EXIT_SUCCESS)
+        system_log.debug(_(u"strategy run successfully, normal exit"))
+        return result
 
 
 def _exception_handler(e):

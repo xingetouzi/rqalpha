@@ -39,6 +39,9 @@ class FuturePosition(BasePosition):
         self._buy_avg_open_price = 0.
         self._sell_avg_open_price = 0.
 
+    def __repr__(self):
+        return 'FuturePosition({})'.format(self.__dict__)
+
     def get_state(self):
         return {
             'order_book_id': self._order_book_id,
@@ -290,7 +293,7 @@ class FuturePosition(BasePosition):
         """
         [float] 保证金
         """
-        # TODO 需要添加单向大边相关的处理逻辑
+        # TODO: 需要添加单向大边相关的处理逻辑
         return self.buy_margin + self.sell_margin
 
     @property

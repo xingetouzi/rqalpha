@@ -17,7 +17,7 @@ from bisect import bisect_right
 
 import numpy as np
 
-from ..utils.datetime_func import convert_date_to_int
+from rqalpha.utils.datetime_func import convert_date_to_int
 
 
 PRICE_FIELDS = {
@@ -37,7 +37,7 @@ def _factor_for_date(dates, factors, d):
 
 
 def adjust_bars(bars, ex_factors, fields, adjust_type, adjust_orig):
-    if ex_factors is None:
+    if ex_factors is None or len(bars) == 0:
         return bars if fields is None else bars[fields]
 
     dates = ex_factors['start_date']

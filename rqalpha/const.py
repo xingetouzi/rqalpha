@@ -37,7 +37,7 @@ class EXECUTION_PHASE(CustomEnum):
 
 # noinspection PyPep8Naming
 class RUN_TYPE(CustomEnum):
-    # TODO 取消 RUN_TYPE, 取而代之的是使用开启哪些Mod来控制策略所运行的类型
+    # TODO: 取消 RUN_TYPE, 取而代之的是使用开启哪些Mod来控制策略所运行的类型
     # Back Test
     BACKTEST = "BACKTEST"
     # Paper Trading
@@ -127,6 +127,7 @@ class INSTRUMENT_TYPE(CustomEnum):
     FENJI_MU = "FENJI_MU"
     FENJI_A = "FENJI_A"
     FENJI_B = "FENJI_B"
+    PUBLIC_FUND = 'PublicFund'
 
 
 # noinspection PyPep8Naming
