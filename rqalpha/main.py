@@ -259,25 +259,28 @@ def run(config, source_code=None, user_funcs=None):
 
         if config.base.persist:
             persist_provider = env.persist_provider
-            persist_helper = PersistHelper(persist_provider, env.event_bus, config.base.persist_mode)
-            persist_helper.register('core', CoreObjectsPersistProxy(scheduler))
-            persist_helper.register('user_context', ucontext)
-            persist_helper.register('global_vars', env.global_vars)
-            persist_helper.register('universe', env._universe)
-            if isinstance(event_source, Persistable):
-                persist_helper.register('event_source', event_source)
-            persist_helper.register('portfolio', env.portfolio)
-            if env.benchmark_portfolio:
-                persist_helper.register('benchmark_portfolio', env.benchmark_portfolio)
-            for name, module in six.iteritems(env.mod_dict):
-                if isinstance(module, Persistable):
-                    persist_helper.register('mod_{}'.format(name), module)
-            # broker will restore open orders from account
-            if isinstance(broker, Persistable):
-                persist_helper.register('broker', broker)
+            if persist_provider:
+                persist_helper = PersistHelper(persist_provider, env.event_bus, config.base.persist_mode)
+                persist_helper.register('core', CoreObjectsPersistProxy(scheduler))
+                persist_helper.register('user_context', ucontext)
+                persist_helper.register('global_vars', env.global_vars)
+                persist_helper.register('universe', env._universe)
+                if isinstance(event_source, Persistable):
+                    persist_helper.register('event_source', event_source)
+                persist_helper.register('portfolio', env.portfolio)
+                if env.benchmark_portfolio:
+                    persist_helper.register('benchmark_portfolio', env.benchmark_portfolio)
+                for name, module in six.iteritems(env.mod_dict):
+                    if isinstance(module, Persistable):
+                        persist_helper.register('mod_{}'.format(name), module)
+                # broker will restore open orders from account
+                if isinstance(broker, Persistable):
+                    persist_helper.register('broker', broker)
 
-            persist_helper.restore()
-            env.event_bus.publish_event(Event(EVENT.POST_SYSTEM_RESTORED))
+                persist_helper.restore()
+                env.event_bus.publish_event(Event(EVENT.POST_SYSTEM_RESTORED))
+            else:
+                system_log.warning("There is no PersistProvider")
 
         init_succeed = True
 

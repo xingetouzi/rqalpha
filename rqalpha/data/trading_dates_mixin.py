@@ -33,7 +33,7 @@ class TradingDatesMixin(object):
         return self._dates[left:right]
 
     def get_previous_trading_date(self, date, n=1):
-        date = pd.Timestamp(date).replace(hour=0, minute=0, second=0)
+        date = pd.Timestamp(date).replace(hour=0, minute=0, second=0, microsecond=0)
         pos = self._dates.searchsorted(date)
         if pos >= n:
             return self._dates[pos - n]
@@ -41,7 +41,7 @@ class TradingDatesMixin(object):
             return self._dates[0]
 
     def get_next_trading_date(self, date, n=1):
-        date = pd.Timestamp(date).replace(hour=0, minute=0, second=0)
+        date = pd.Timestamp(date).replace(hour=0, minute=0, second=0, microsecond=0)
         pos = self._dates.searchsorted(date, side='right')
         if pos + n > len(self._dates):
             return self._dates[-1]
